@@ -4,10 +4,7 @@ import com.compilers.entitys.CartesianPlane;
 import com.compilers.entitys.Point;
 import com.compilers.entitys.Edge;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Random;
-import java.util.Scanner;
+import java.util.*;
 
 // Complexidade O(n!)
 public class Main {
@@ -18,11 +15,35 @@ public class Main {
     static int MAXIMUM = 100;
 
     public static void main(String[] args) {
+
+        CartesianPlane cartesianPlane = null;
         int vertexNumber = definedVertexNumber();
-        CartesianPlane cartesianPlane = generateCartesianPlane(vertexNumber);
+
+        if(isMock()){
+            cartesianPlane = generateCartesianPlaneMock(vertexNumber);
+        }
+        else{
+            cartesianPlane = generateCartesianPlane(vertexNumber);
+        }
 
         printCartesianPlane(cartesianPlane, vertexNumber);
-        calculateBestPath(cartesianPlane);
+
+        calculateWithnNarestNeighbor(cartesianPlane);
+    }
+
+    private static boolean isMock(){
+        System.out.println("Você deseja que aplicação funcione como mock ?");
+        System.out.println("[0] - MOCK");
+        System.out.println("[1] - REAL");
+
+        Scanner input = new Scanner(System.in);
+        int option = input.nextInt();
+        while (option < 0 || option > 1){
+            System.out.println("Escolha um valor maior que 1: ");
+            option = input.nextInt();
+        }
+
+        return option == 0;
     }
 
     private static int definedVertexNumber(){
@@ -56,7 +77,7 @@ public class Main {
     private static ArrayList<Point> generatePoints(int vertexNumber){
         ArrayList<Point> points = new ArrayList<>(vertexNumber);
 
-        for (int i = 0; i <= vertexNumber; i++){
+        for (int i = 0; i < vertexNumber; i++){
             Point newPoint = generatePointNotRepeat();
             points.add(newPoint);
         }
@@ -67,7 +88,7 @@ public class Main {
     private static ArrayList<Point> generatePointsMock(int vertexNumber){
         ArrayList<Point> points = new ArrayList<>(vertexNumber);
 
-        for (int i = 0; i <= vertexNumber; i++){
+        for (int i = 0; i < vertexNumber; i++){
             Point newPoint = new Point(String.valueOf(i), i, i);
             points.add(newPoint);
         }
@@ -212,7 +233,7 @@ public class Main {
         return random.nextBoolean();
     }
 
-    public static void calculateBestPath(CartesianPlane cartesianPlane) {
+    public static void calculateWithBruteForce(CartesianPlane cartesianPlane) {
         ArrayList<Point> points = cartesianPlane.getPoints();
         ArrayList<Edge> edges = cartesianPlane.getEdges();
 
@@ -230,19 +251,23 @@ public class Main {
             }
         }
 
-        System.out.println("\n------------------------------------");
+        if(bestPath != null){
+            System.out.println("\n------------------------------------");
 
-        for(int i =0; i < bestPath.size()-1; i++){
-            System.out.print(bestPath.get(i).getId());
-            if(i < bestPath.size()-2){
-                System.out.print(" -> ");
+            for(int i =0; i < bestPath.size()-1; i++){
+                System.out.print(bestPath.get(i).getId());
+                if(i < bestPath.size()-2){
+                    System.out.print(" -> ");
+                }
             }
+
+            System.out.println("\n------------------------------------");
+
+            System.out.println("Distância total: " + litlePath);
         }
-
-        System.out.println("\n------------------------------------");
-
-//        System.out.println("Melhor caminho: " + bestPath);
-        System.out.println("Distância total: " + litlePath);
+        else{
+            System.out.println("Não existe caminho que satisfaça o problema.");
+        }
     }
 
     private static ArrayList<ArrayList<Point>> generatePermutations(ArrayList<Point> points) {
@@ -258,7 +283,7 @@ public class Main {
             for (int i = l; i < points.size(); i++) {
                 Collections.swap(points, l, i);
                 permute(points, l + 1, permutations);
-                Collections.swap(points, l, i); // Reverte a troca
+                Collections.swap(points, l, i);
             }
         }
     }
@@ -296,5 +321,86 @@ public class Main {
             }
         }
         return null;
+    }
+
+    //Pelo vizinho mais proximo
+    public static Edge findNearestEdge(Point from, Set<Point> visited, List<Edge> edges) {
+        float minDistance = Float.MAX_VALUE;
+        Edge nearestEdge = null;
+
+        for (Edge edge : edges) {
+            Point otherPoint = (edge.getPointA().equals(from)) ? edge.getPointB() : edge.getPointA();
+            if (!visited.contains(otherPoint) && edge.getLength() < minDistance) {
+                minDistance = edge.getLength();
+                nearestEdge = edge;
+            }
+        }
+
+        return nearestEdge;
+    }
+
+    public static List<Point> narestNeighbor(Point start, List<Point> points, List<Edge> edges) {
+        Set<Point> visited = new HashSet<>();
+        List<Point> path = new ArrayList<>();
+        Point current = start;
+
+        path.add(current);
+        visited.add(current);
+
+        while (visited.size() < points.size()) {
+            Edge nearestEdge = findNearestEdge(current, visited, edges );
+            if (nearestEdge == null) break;
+
+            Point nextPoint = nearestEdge.getPointA().equals(current) ? nearestEdge.getPointB() : nearestEdge.getPointA();
+            path.add(nextPoint);
+            visited.add(nextPoint);
+
+            current = nextPoint;
+        }
+
+        path.add(start);
+        return path;
+    }
+
+    public static String formatPath(List<Point> path) {
+        StringBuilder formattedPath = new StringBuilder();
+        for (int i = 0; i < path.size(); i++) {
+            formattedPath.append(path.get(i).getId());
+            if (i < path.size() - 1) {
+                formattedPath.append(" -> ");
+            }
+        }
+        return formattedPath.toString();
+    }
+
+    public static Edge findEdgeBetween(Point a, Point b, List<Edge> edges) {
+        for (Edge edge : edges) {
+            if ((edge.getPointA().equals(a) && edge.getPointB().equals(b)) ||
+                    (edge.getPointA().equals(b) && edge.getPointB().equals(a))) {
+                return edge;
+            }
+        }
+        return null;
+    }
+
+    public static float calculateTotalDistance(List<Point> path, List<Edge> edges) {
+        float totalDistance = 0;
+        for (int i = 0; i < path.size() - 1; i++) {
+            Edge edge = findEdgeBetween(path.get(i), path.get(i + 1), edges);
+            if (edge != null) {
+                totalDistance += edge.getLength();
+            }
+        }
+        return totalDistance;
+    }
+
+    private static void calculateWithnNarestNeighbor(CartesianPlane cartesianPlane){
+        List<Point> path = narestNeighbor(cartesianPlane.getPoints().get(0), cartesianPlane.getPoints(), cartesianPlane.getEdges());
+        float totalDistance = calculateTotalDistance(path, cartesianPlane.getEdges());
+
+        System.out.println("\n------------------------------------");
+        System.out.println("Caminho: " + formatPath(path));
+        System.out.println("Distância total: " + totalDistance);
+        System.out.println("\n------------------------------------");
     }
 }
