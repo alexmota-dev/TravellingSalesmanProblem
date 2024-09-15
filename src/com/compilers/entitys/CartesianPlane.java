@@ -43,7 +43,7 @@ public class CartesianPlane {
 
     @Override
     public String toString() {
-        return "CartesianPlane{" +
+        return "CartesianPlane{\n" +
                 "points=" + Arrays.toString(new ArrayList[]{points}) +
                 "}\n" +
                 "edges=" + Arrays.toString(new ArrayList[]{edges}) +

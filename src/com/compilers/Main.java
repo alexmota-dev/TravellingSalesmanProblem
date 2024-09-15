@@ -26,8 +26,7 @@ public class Main {
             cartesianPlane = generateCartesianPlane(vertexNumber);
         }
 
-        printCartesianPlane(cartesianPlane, vertexNumber);
-
+        System.out.println(cartesianPlane);
         calculateWithnNarestNeighbor(cartesianPlane);
     }
 
@@ -169,22 +168,16 @@ public class Main {
         return randomNumber;
     }
 
-    private static void printCartesianPlane(CartesianPlane cartesianPlane, int vertexNumber){
-        System.out.println("============= Mapeamento dos "+ vertexNumber +" vértices =============");
-        System.out.println(cartesianPlane.toString());
-        printDistances(cartesianPlane);
-    }
-
     private static String generateRandomString() {
         Random random = new Random();
-        StringBuilder combinacao = new StringBuilder(3);
+        StringBuilder combination = new StringBuilder(3);
 
         for (int i = 0; i < 3; i++) {
-            char letraAleatoria = (char) (random.nextInt(26) + 'a'); // Gera um número entre 0 e 25 e adiciona 'a'
-            combinacao.append(letraAleatoria);
+            char randomWord = (char) (random.nextInt(26) + 'a');
+            combination.append(randomWord);
         }
 
-        return combinacao.toString();
+        return combination.toString();
     }
 
     private static String generateNewCityName(){
@@ -206,23 +199,6 @@ public class Main {
         return false;
     }
 
-    private static void printDistances(CartesianPlane cartesianPlane) {
-        ArrayList<Point> points = cartesianPlane.getPoints();
-        ArrayList<Edge> edges = cartesianPlane.getEdges();
-
-        for (int i = 0; i < points.size(); i++) {
-            for (int j = i + 1; j < points.size(); j++) {
-                Point p1 = points.get(i);
-                Point p2 = points.get(j);
-                float distance = calculateDistanec(p1, p2);
-
-                if(edges.contains(new Edge(p1, p2, distance))){
-                    System.out.println("Distância entre (" + p1.getX() + ", " + p1.getY() + ") e (" + p2.getX() + ", " + p2.getY() + ") = " + distance);
-                }
-            }
-        }
-    }
-
     private static float calculateDistanec(Point p1, Point p2) {
         double exactDistance = Math.sqrt(Math.pow((p2.getX() - p1.getX()), 2) + Math.pow((p2.getY() - p1.getY()), 2));
         return (float) (Math.round(exactDistance * 100.0) / 100.0);
@@ -231,96 +207,6 @@ public class Main {
     private static boolean generateBoolean(){
         Random random = new Random();
         return random.nextBoolean();
-    }
-
-    public static void calculateWithBruteForce(CartesianPlane cartesianPlane) {
-        ArrayList<Point> points = cartesianPlane.getPoints();
-        ArrayList<Edge> edges = cartesianPlane.getEdges();
-
-        float litlePath = Float.MAX_VALUE;
-        ArrayList<Point> bestPath = null;
-
-        ArrayList<ArrayList<Point>> permutacoes = generatePermutations(points);
-
-        for (ArrayList<Point> permutacao : permutacoes) {
-            float path = calculatePathCost(permutacao, edges);
-
-            if (path <= litlePath) {
-                litlePath = path;
-                bestPath = new ArrayList<>(permutacao);
-            }
-        }
-
-        if(bestPath != null){
-            System.out.println("\n------------------------------------");
-
-            for(int i =0; i < bestPath.size()-1; i++){
-                System.out.print(bestPath.get(i).getId());
-                if(i < bestPath.size()-2){
-                    System.out.print(" -> ");
-                }
-            }
-
-            System.out.println("\n------------------------------------");
-
-            System.out.println("Distância total: " + litlePath);
-        }
-        else{
-            System.out.println("Não existe caminho que satisfaça o problema.");
-        }
-    }
-
-    private static ArrayList<ArrayList<Point>> generatePermutations(ArrayList<Point> points) {
-        ArrayList<ArrayList<Point>> permutations = new ArrayList<>();
-        permute(points, 0, permutations);
-        return permutations;
-    }
-
-    private static void permute(ArrayList<Point> points, int l, ArrayList<ArrayList<Point>> permutations) {
-        if (l == points.size() - 1) {
-            permutations.add(new ArrayList<>(points));
-        } else {
-            for (int i = l; i < points.size(); i++) {
-                Collections.swap(points, l, i);
-                permute(points, l + 1, permutations);
-                Collections.swap(points, l, i);
-            }
-        }
-    }
-
-    private static float calculatePathCost(ArrayList<Point> path, ArrayList<Edge> edges) {
-        float totalDistance = 0;
-
-        for (int i = 0; i < path.size() - 1; i++) {
-            Point p1 = path.get(i);
-            Point p2 = path.get(i + 1);
-            Edge edge = findEdge(p1, p2, edges);
-
-            if (edge != null) {
-                totalDistance += edge.getLength();
-            } else {
-                return Float.MAX_VALUE;
-            }
-        }
-
-        Edge returnEdge = findEdge(path.get(path.size() - 1), path.get(0), edges);
-        if (returnEdge != null) {
-            totalDistance += returnEdge.getLength();
-        } else {
-            return Float.MAX_VALUE;
-        }
-
-        return totalDistance;
-    }
-
-    private static Edge findEdge(Point p1, Point p2, ArrayList<Edge> edges) {
-        for (Edge edge : edges) {
-            if ((edge.getPointA().equals(p1) && edge.getPointB().equals(p2)) ||
-                    (edge.getPointA().equals(p2) && edge.getPointB().equals(p1))) {
-                return edge;
-            }
-        }
-        return null;
     }
 
     //Pelo vizinho mais proximo
@@ -349,6 +235,7 @@ public class Main {
 
         while (visited.size() < points.size()) {
             Edge nearestEdge = findNearestEdge(current, visited, edges );
+
             if (nearestEdge == null) break;
 
             Point nextPoint = nearestEdge.getPointA().equals(current) ? nearestEdge.getPointB() : nearestEdge.getPointA();
@@ -356,6 +243,13 @@ public class Main {
             visited.add(nextPoint);
 
             current = nextPoint;
+        }
+
+        Edge returnEdge = findEdgeBetween(current, start, edges);
+        if (returnEdge == null) {
+            System.out.println("Não é possível resolver o problema do caixeiro viajante com o vizinho maix porximo");
+            System.out.println("Não existe aresta entre o último ponto e o ponto inicial.");
+            return null;
         }
 
         path.add(start);
@@ -394,13 +288,16 @@ public class Main {
         return totalDistance;
     }
 
-    private static void calculateWithnNarestNeighbor(CartesianPlane cartesianPlane){
+    private static void calculateWithnNarestNeighbor(CartesianPlane cartesianPlane) {
         List<Point> path = narestNeighbor(cartesianPlane.getPoints().get(0), cartesianPlane.getPoints(), cartesianPlane.getEdges());
-        float totalDistance = calculateTotalDistance(path, cartesianPlane.getEdges());
 
-        System.out.println("\n------------------------------------");
-        System.out.println("Caminho: " + formatPath(path));
-        System.out.println("Distância total: " + totalDistance);
-        System.out.println("\n------------------------------------");
+        if (path != null) {
+            float totalDistance = calculateTotalDistance(path, cartesianPlane.getEdges());
+
+            System.out.println("\n------------------------------------");
+            System.out.println("Caminho: " + formatPath(path));
+            System.out.println("Distância total: " + totalDistance);
+            System.out.println("\n------------------------------------");
+        }
     }
 }
