@@ -3,6 +3,7 @@ package com.compilers;
 import com.compilers.entitys.CartesianPlane;
 import com.compilers.entitys.Point;
 import com.compilers.entitys.Edge;
+import com.compilers.util.GenerateFile;
 
 import java.util.*;
 
@@ -27,7 +28,20 @@ public class Main {
         }
 
         System.out.println(cartesianPlane);
-        calculateWithnNarestNeighbor(cartesianPlane);
+        List<Point> path = calculateWithnNarestNeighbor(cartesianPlane);
+
+        showResult(cartesianPlane, path);
+    }
+
+    private static void showResult(CartesianPlane cartesianPlane, List<Point> path){
+        if (path != null) {
+            float totalDistance = calculateTotalDistance(path, cartesianPlane.getEdges());
+
+            System.out.println("\n------------------------------------");
+            System.out.println("Caminho: " + formatPath(path));
+            System.out.println("Distância total: " + totalDistance);
+            System.out.println("\n------------------------------------");
+        }
     }
 
     private static boolean isMock(){
@@ -225,7 +239,7 @@ public class Main {
         return nearestEdge;
     }
 
-    public static List<Point> narestNeighbor(Point start, List<Point> points, List<Edge> edges) {
+    public static List<Point> narestNeighbor(Point start, CartesianPlane cartesianPlane) {
         Set<Point> visited = new HashSet<>();
         List<Point> path = new ArrayList<>();
         Point current = start;
@@ -233,8 +247,8 @@ public class Main {
         path.add(current);
         visited.add(current);
 
-        while (visited.size() < points.size()) {
-            Edge nearestEdge = findNearestEdge(current, visited, edges );
+        while (visited.size() < cartesianPlane.getPoints().size()) {
+            Edge nearestEdge = findNearestEdge(current, visited, cartesianPlane.getEdges() );
 
             if (nearestEdge == null) break;
 
@@ -245,7 +259,10 @@ public class Main {
             current = nextPoint;
         }
 
-        Edge returnEdge = findEdgeBetween(current, start, edges);
+        Edge returnEdge = findEdgeBetween(current, start, cartesianPlane.getEdges());
+
+        GenerateFile.generatePythonFile(cartesianPlane, path, start);
+
         if (returnEdge == null) {
             System.out.println("Não é possível resolver o problema do caixeiro viajante com o vizinho maix porximo");
             System.out.println("Não existe aresta entre o último ponto e o ponto inicial.");
@@ -288,16 +305,9 @@ public class Main {
         return totalDistance;
     }
 
-    private static void calculateWithnNarestNeighbor(CartesianPlane cartesianPlane) {
-        List<Point> path = narestNeighbor(cartesianPlane.getPoints().get(0), cartesianPlane.getPoints(), cartesianPlane.getEdges());
+    private static List<Point> calculateWithnNarestNeighbor(CartesianPlane cartesianPlane) {
+        List<Point> path = narestNeighbor(cartesianPlane.getPoints().get(0), cartesianPlane);
 
-        if (path != null) {
-            float totalDistance = calculateTotalDistance(path, cartesianPlane.getEdges());
-
-            System.out.println("\n------------------------------------");
-            System.out.println("Caminho: " + formatPath(path));
-            System.out.println("Distância total: " + totalDistance);
-            System.out.println("\n------------------------------------");
-        }
+        return path;
     }
 }
